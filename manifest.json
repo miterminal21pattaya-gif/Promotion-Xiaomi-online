@@ -1,0 +1,12 @@
+{
+  "name": "Xiaomi Store Terminal 21 Pattaya - Admin",
+  "short_name": "Xiaomi Admin",
+  "description": "ระบบจัดการร้าน Xiaomi Store Terminal 21 Pattaya",
+  "start_url": "./admin-app.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5f5f5",
+  "theme_color": "#ff6900",
+  "lang": "th"
+}
