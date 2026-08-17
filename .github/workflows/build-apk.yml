@@ -20,16 +20,22 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Install ImageMagick
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y imagemagick fonts-dejavu
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
 
       - name: Create Android project
+        shell: bash
         run: |
+          set -e
+
+          rm -rf app
+          rm -f settings.gradle build.gradle
+
           mkdir -p app/src/main/java/com/mtn2/stock
-          mkdir -p app/src/main/res/drawable
           mkdir -p app/src/main/res/values
+          mkdir -p app/src/main/res/drawable
 
           cat > settings.gradle <<'EOF'
           pluginManagement {
@@ -71,8 +77,8 @@ jobs:
                   applicationId "com.mtn2.stock"
                   minSdk 23
                   targetSdk 35
-                  versionCode 4
-                  versionName "4.0"
+                  versionCode 2
+                  versionName "2.0"
               }
           }
           EOF
@@ -80,27 +86,49 @@ jobs:
           cat > app/src/main/res/values/styles.xml <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
-              <style name="AppTheme"
-                  parent="android:style/Theme.Material.Light.NoActionBar">
+              <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
                   <item name="android:fontFamily">sans</item>
-                  <item name="android:colorAccent">#FF6900</item>
-                  <item name="android:navigationBarColor">#000000</item>
-                  <item name="android:statusBarColor">#FF6900</item>
-                  <item name="android:windowLightStatusBar">false</item>
+                  <item name="android:windowLightStatusBar">true</item>
+                  <item name="android:statusBarColor">#FFFFFF</item>
+                  <item name="android:navigationBarColor">#FFFFFF</item>
+                  <item name="android:windowActionModeOverlay">true</item>
               </style>
           </resources>
+          EOF
+
+          cat > app/src/main/res/drawable/ic_launcher.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp"
+              android:height="108dp"
+              android:viewportWidth="108"
+              android:viewportHeight="108">
+
+              <path
+                  android:fillColor="#FF6900"
+                  android:pathData="M20,0 L88,0 Q108,0 108,20 L108,88 Q108,108 88,108 L20,108 Q0,108 0,88 L0,20 Q0,0 20,0 Z" />
+
+              <path
+                  android:fillColor="#FFFFFF"
+                  android:pathData="M25,38 L83,38 L83,48 L25,48 Z" />
+
+              <path
+                  android:fillColor="#FFFFFF"
+                  android:pathData="M25,58 L83,58 L83,68 L25,68 Z" />
+          </vector>
           EOF
 
           cat > app/src/main/AndroidManifest.xml <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-              <uses-permission android:name="android.permission.INTERNET"/>
+              <uses-permission android:name="android.permission.INTERNET" />
 
               <application
-                  android:theme="@style/AppTheme"
-                  android:label="Xiaomi Store Stock MTN2"
+                  android:allowBackup="true"
                   android:usesCleartextTraffic="true"
+                  android:theme="@style/AppTheme"
+                  android:label="Xiaomi Store Stock"
                   android:icon="@drawable/ic_launcher">
 
                   <activity
@@ -109,8 +137,8 @@ jobs:
                       android:exported="true">
 
                       <intent-filter>
-                          <action android:name="android.intent.action.MAIN"/>
-                          <category android:name="android.intent.category.LAUNCHER"/>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
                       </intent-filter>
 
                   </activity>
@@ -120,31 +148,13 @@ jobs:
           </manifest>
           EOF
 
-          # ==========================================
-          # สร้างไอคอน MTN2
-          # ส้มจริง + MTN2 ดำ
-          # ไม่มีพื้นดำ
-          # ==========================================
-
-          convert -size 512x512 xc:none \
-            -fill "#FF6900" \
-            -draw "roundrectangle 0,0 511,511 110,110" \
-            -gravity center \
-            -font "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" \
-            -pointsize 132 \
-            -fill "#000000" \
-            -stroke none \
-            -annotate +0+8 "MTN2" \
-            app/src/main/res/drawable/ic_launcher.png
-
-          # ตรวจสอบไฟล์ไอคอน
-          file app/src/main/res/drawable/ic_launcher.png
-
           cat > app/src/main/java/com/mtn2/stock/MainActivity.java <<'EOF'
           package com.mtn2.stock;
 
           import android.app.Activity;
+          import android.os.Build;
           import android.os.Bundle;
+          import android.graphics.Color;
           import android.webkit.WebSettings;
           import android.webkit.WebView;
           import android.webkit.WebViewClient;
@@ -158,6 +168,7 @@ jobs:
                   super.onCreate(savedInstanceState);
 
                   webView = new WebView(this);
+                  webView.setBackgroundColor(Color.WHITE);
                   setContentView(webView);
 
                   WebSettings settings = webView.getSettings();
@@ -170,6 +181,13 @@ jobs:
                   settings.setSupportZoom(false);
                   settings.setBuiltInZoomControls(false);
                   settings.setDisplayZoomControls(false);
+                  settings.setLoadWithOverviewMode(false);
+                  settings.setUseWideViewPort(false);
+
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                      settings.setForceDark(WebSettings.FORCE_DARK_OFF);
+                      settings.setAlgorithmicDarkeningAllowed(false);
+                  }
 
                   webView.setWebViewClient(new WebViewClient());
 
@@ -189,16 +207,20 @@ jobs:
           }
           EOF
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: "8.7"
+      - name: Build APK
+        run: |
+          gradle assembleDebug
 
-            - name: Build APK
-        run: gradle assembleDebug
+      - name: Verify APK
+        shell: bash
+        run: |
+          set -e
+          test -f app/build/outputs/apk/debug/app-debug.apk
+          ls -lh app/build/outputs/apk/debug/app-debug.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: XiaomiStoreStockMTN2-v2
           path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
