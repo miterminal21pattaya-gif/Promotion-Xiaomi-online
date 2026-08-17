@@ -126,7 +126,7 @@ jobs:
           # ไม่มีพื้นดำ
           # ==========================================
 
-          magick -size 512x512 xc:none \
+          convert -size 512x512 xc:none \
             -fill "#FF6900" \
             -draw "roundrectangle 0,0 511,511 110,110" \
             -gravity center \
