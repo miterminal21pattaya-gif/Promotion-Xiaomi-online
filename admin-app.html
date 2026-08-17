@@ -2,61 +2,52 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Xiaomi Store Admin</title>
+
+<link rel="manifest" href="./manifest.json">
 
 <meta name="theme-color" content="#ff6900">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Xiaomi Admin">
-
-<link rel="manifest" href="manifest.json">
-
-<title>Xiaomi Store Terminal 21 Pattaya - Admin</title>
 
 <style>
 * {
   box-sizing: border-box;
 }
 
-html,
 body {
   margin: 0;
-  width: 100%;
-  min-height: 100%;
-}
-
-body {
   font-family: Arial, sans-serif;
   background: #f5f5f5;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
 }
 
 .app {
   width: min(430px, 94%);
   background: white;
   border-radius: 24px;
-  padding: 28px 22px;
+  padding: 30px 22px;
   text-align: center;
   box-shadow: 0 10px 35px rgba(0,0,0,.12);
 }
 
 .logo {
-  width: 76px;
-  height: 76px;
-  border-radius: 18px;
+  width: 82px;
+  height: 82px;
+  border-radius: 20px;
   margin: 0 auto 18px;
   background: #ff6900;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 42px;
+  font-size: 44px;
   font-weight: bold;
 }
 
@@ -67,7 +58,7 @@ h1 {
 
 p {
   color: #777;
-  margin-bottom: 28px;
+  margin: 0 0 25px;
 }
 
 button {
@@ -86,15 +77,10 @@ button {
 }
 
 .install {
+  display: none;
   margin-top: 12px;
   background: #222;
   color: white;
-  display: none;
-}
-
-.open:active,
-.install:active {
-  transform: scale(.98);
 }
 
 .info {
@@ -113,16 +99,14 @@ button {
 
   <h1>ระบบผู้ดูแลร้าน</h1>
 
-  <p>
-    Xiaomi Store Terminal 21 Pattaya
-  </p>
+  <p>Xiaomi Store Terminal 21 Pattaya</p>
 
   <button class="open" onclick="openAdmin()">
     ⚙️ เปิดระบบ Admin
   </button>
 
-  <button class="install" id="installBtn">
-    📱 ติดตั้งแอป Admin
+  <button id="installApp" class="install" onclick="installApp()">
+    📲 ติดตั้งแอป Admin
   </button>
 
   <div class="info">
@@ -134,35 +118,43 @@ button {
 <script>
 
 function openAdmin() {
-  window.location.href = "admin.html";
+  window.location.href = "./admin.html";
 }
 
+/* Service Worker */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function() {
+    navigator.serviceWorker.register("./service-worker.js")
+      .then(function() {
+        console.log("Admin PWA Ready");
+      })
+      .catch(function(error) {
+        console.error("Service Worker Error:", error);
+      });
+  });
+}
 
-/* =========================
-   PWA INSTALL
-========================= */
-
+/* Install PWA */
 let deferredPrompt = null;
 
-const installBtn = document.getElementById("installBtn");
+window.addEventListener("beforeinstallprompt", function(event) {
 
-window.addEventListener("beforeinstallprompt", function(e) {
+  event.preventDefault();
 
-  e.preventDefault();
+  deferredPrompt = event;
 
-  deferredPrompt = e;
+  const installButton =
+    document.getElementById("installApp");
 
-  installBtn.style.display = "block";
-
+  installButton.style.display = "block";
 });
 
-
-installBtn.addEventListener("click", async function() {
+function installApp() {
 
   if (!deferredPrompt) {
 
     alert(
-      "ถ้าไม่เห็นหน้าติดตั้ง ให้กดเมนู ⋮ ของ Chrome แล้วเลือก \"ติดตั้งแอป\" หรือ \"เพิ่มไปยังหน้าจอหลัก\""
+      "ยังไม่สามารถติดตั้งแอปได้ในขณะนี้ กรุณารีเฟรชหน้านี้แล้วลองอีกครั้ง"
     );
 
     return;
@@ -170,50 +162,34 @@ installBtn.addEventListener("click", async function() {
 
   deferredPrompt.prompt();
 
-  const result = await deferredPrompt.userChoice;
+  deferredPrompt.userChoice.then(function(choice) {
 
-  if (result.outcome === "accepted") {
-    console.log("ติดตั้งแอปแล้ว");
-  }
+    console.log(
+      "Install result:",
+      choice.outcome
+    );
 
-  deferredPrompt = null;
+    deferredPrompt = null;
 
-  installBtn.style.display = "none";
-
-});
-
-
-window.addEventListener("appinstalled", function() {
-
-  installBtn.style.display = "none";
-
-});
-
-
-/* =========================
-   SERVICE WORKER
-========================= */
-
-if ("serviceWorker" in navigator) {
-
-  window.addEventListener("load", function() {
-
-    navigator.serviceWorker
-      .register("service-worker.js")
-      .then(function() {
-
-        console.log("PWA พร้อมใช้งาน");
-
-      })
-      .catch(function(error) {
-
-        console.log("PWA Error:", error);
-
-      });
+    document.getElementById(
+      "installApp"
+    ).style.display = "none";
 
   });
-
 }
+
+window.addEventListener(
+  "appinstalled",
+  function() {
+
+    document.getElementById(
+      "installApp"
+    ).style.display = "none";
+
+    console.log("Admin App Installed");
+
+  }
+);
 
 </script>
 
