@@ -20,6 +20,11 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - name: Install ImageMagick
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+
       - name: Create Android project
         run: |
           mkdir -p app/src/main/java/com/mtn2/stock
@@ -115,55 +120,20 @@ jobs:
           </manifest>
           EOF
 
-          # สร้างไอคอน MTN2 จริง
-          python3 - <<'PY'
-          from PIL import Image, ImageDraw, ImageFont
-
-          size = 512
-          img = Image.new("RGB", (size, size), "#FF6900")
-          draw = ImageDraw.Draw(img)
-
-          # มุมโค้ง
-          mask = Image.new("L", (size, size), 0)
-          md = ImageDraw.Draw(mask)
-          md.rounded_rectangle(
-              (0, 0, size-1, size-1),
-              radius=110,
-              fill=255
-          )
-          img.putalpha(mask)
-
-          # ตัวอักษร MTN2
-          try:
-              font = ImageFont.truetype(
-                  "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-                  150
-              )
-          except:
-              font = ImageFont.load_default()
-
-          text = "MTN2"
-          bbox = draw.textbbox((0, 0), text, font=font)
-          tw = bbox[2] - bbox[0]
-          th = bbox[3] - bbox[1]
-
-          x = (size - tw) / 2
-          y = (size - th) / 2 - 10
-
-          draw.text(
-              (x, y),
-              text,
-              fill="#000000",
-              font=font,
-              stroke_width=2,
-              stroke_fill="#000000"
-          )
-
-          img.save(
-              "app/src/main/res/drawable/ic_launcher.png",
-              "PNG"
-          )
-          PY
+          # สร้างไอคอน MTN2 ด้วย ImageMagick
+          convert \
+            -size 512x512 \
+            xc:"#FF6900" \
+            -gravity center \
+            -font DejaVu-Sans-Bold \
+            -pointsize 145 \
+            -fill black \
+            -draw "roundrectangle 0,0 511,511 105,105" \
+            -fill black \
+            -gravity center \
+            -pointsize 145 \
+            -annotate +0+8 "MTN2" \
+            app/src/main/res/drawable/ic_launcher.png
 
           cat > app/src/main/java/com/mtn2/stock/MainActivity.java <<'EOF'
           package com.mtn2.stock;
