@@ -23,7 +23,7 @@ jobs:
       - name: Install ImageMagick
         run: |
           sudo apt-get update
-          sudo apt-get install -y imagemagick
+          sudo apt-get install -y imagemagick fonts-dejavu
 
       - name: Create Android project
         run: |
@@ -71,8 +71,8 @@ jobs:
                   applicationId "com.mtn2.stock"
                   minSdk 23
                   targetSdk 35
-                  versionCode 2
-                  versionName "2.0"
+                  versionCode 4
+                  versionName "4.0"
               }
           }
           EOF
@@ -120,20 +120,25 @@ jobs:
           </manifest>
           EOF
 
-          # สร้างไอคอน MTN2 ด้วย ImageMagick
-          convert \
-            -size 512x512 \
-            xc:"#FF6900" \
+          # ==========================================
+          # สร้างไอคอน MTN2
+          # ส้มจริง + MTN2 ดำ
+          # ไม่มีพื้นดำ
+          # ==========================================
+
+          magick -size 512x512 xc:none \
+            -fill "#FF6900" \
+            -draw "roundrectangle 0,0 511,511 110,110" \
             -gravity center \
-            -font DejaVu-Sans-Bold \
-            -pointsize 145 \
-            -fill black \
-            -draw "roundrectangle 0,0 511,511 105,105" \
-            -fill black \
-            -gravity center \
-            -pointsize 145 \
+            -font "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" \
+            -pointsize 132 \
+            -fill "#000000" \
+            -stroke none \
             -annotate +0+8 "MTN2" \
             app/src/main/res/drawable/ic_launcher.png
+
+          # ตรวจสอบไฟล์ไอคอน
+          file app/src/main/res/drawable/ic_launcher.png
 
           cat > app/src/main/java/com/mtn2/stock/MainActivity.java <<'EOF'
           package com.mtn2.stock;
@@ -195,5 +200,4 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: XiaomiStoreStockMTN2-v2
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: XiaomiStoreStockMT
