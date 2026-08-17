@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Java 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
@@ -28,9 +28,6 @@ jobs:
           mkdir -p app/src/main/java/com/mtn2/stock
           mkdir -p app/src/main/res/values
           mkdir -p app/src/main/res/drawable
-
-          test -f icon.png
-          cp icon.png app/src/main/res/drawable/icon.png
 
           cat > settings.gradle <<'EOF'
           pluginManagement {
@@ -84,8 +81,8 @@ jobs:
               <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
                   <item name="android:fontFamily">sans</item>
                   <item name="android:colorAccent">#FF6900</item>
-                  <item name="android:navigationBarColor">#000000</item>
                   <item name="android:statusBarColor">#FF6900</item>
+                  <item name="android:navigationBarColor">#000000</item>
                   <item name="android:windowLightStatusBar">false</item>
               </style>
           </resources>
@@ -100,13 +97,14 @@ jobs:
               <application
                   android:theme="@style/AppTheme"
                   android:label="Xiaomi Store Stock"
+                  android:icon="@drawable/app_icon"
+                  android:roundIcon="@drawable/app_icon"
                   android:usesCleartextTraffic="true"
-                  android:icon="@drawable/icon"
-                  android:resizeableActivity="true">
+                  android:allowBackup="false"
+                  android:supportsRtl="true">
 
                   <activity
                       android:name=".MainActivity"
-                      android:configChanges="orientation|screenSize|keyboardHidden"
                       android:screenOrientation="unspecified"
                       android:exported="true">
 
@@ -126,7 +124,11 @@ jobs:
           package com.mtn2.stock;
 
           import android.app.Activity;
+          import android.content.ActivityNotFoundException;
+          import android.content.Intent;
+          import android.net.Uri;
           import android.os.Bundle;
+          import android.webkit.WebResourceRequest;
           import android.webkit.WebSettings;
           import android.webkit.WebView;
           import android.webkit.WebViewClient;
@@ -151,42 +153,242 @@ jobs:
                   settings.setAllowFileAccess(true);
                   settings.setAllowContentAccess(true);
 
-                  settings.setUseWideViewPort(true);
-                  settings.setLoadWithOverviewMode(false);
-
                   settings.setSupportZoom(false);
                   settings.setBuiltInZoomControls(false);
                   settings.setDisplayZoomControls(false);
 
-                  webView.setWebViewClient(new WebViewClient());
+                  webView.setWebViewClient(new WebViewClient() {
 
+                      @Override
+                      public boolean shouldOverrideUrlLoading(
+                              WebView view,
+                              WebResourceRequest request
+                      ) {
+                          return openExternalLink(request.getUrl().toString());
+                      }
+
+                      @Override
+                      @SuppressWarnings("deprecation")
+                      public boolean shouldOverrideUrlLoading(
+                              WebView view,
+                              String url
+                      ) {
+                          return openExternalLink(url);
+                      }
+
+                      private boolean openExternalLink(String url) {
+
+                          if (url == null || url.trim().isEmpty()) {
+                              return false;
+                          }
+
+                          Uri uri = Uri.parse(url);
+                          String scheme = uri.getScheme();
+
+                          if (scheme == null) {
+                              return false;
+                          }
+
+                          /*
+                           * เว็บไซต์ปกติ
+                           * ให้ WebView เปิดภายในแอปตามเดิม
+                           */
+                          if (
+                              scheme.equalsIgnoreCase("http") ||
+                              scheme.equalsIgnoreCase("https")
+                          ) {
+                              return false;
+                          }
+
+                          /*
+                           * เบอร์โทรศัพท์
+                           *
+                           * tel:0943338882
+                           *
+                           * เปิดหน้าจอโทรศัพท์
+                           */
+                          if (scheme.equalsIgnoreCase("tel")) {
+
+                              try {
+
+                                  Intent intent =
+                                          new Intent(
+                                                  Intent.ACTION_DIAL,
+                                                  uri
+                                          );
+
+                                  startActivity(intent);
+
+                              } catch (ActivityNotFoundException ignored) {
+                              }
+
+                              return true;
+                          }
+
+                          /*
+                           * LINE
+                           *
+                           * line://
+                           *
+                           * เปิดแอป LINE
+                           */
+                          if (scheme.equalsIgnoreCase("line")) {
+
+                              try {
+
+                                  Intent intent =
+                                          new Intent(
+                                                  Intent.ACTION_VIEW,
+                                                  uri
+                                          );
+
+                                  startActivity(intent);
+
+                              } catch (ActivityNotFoundException e) {
+
+                                  try {
+
+                                      Intent fallback =
+                                              new Intent(
+                                                      Intent.ACTION_VIEW,
+                                                      Uri.parse(
+                                                              "https://line.me/"
+                                                      )
+                                              );
+
+                                      startActivity(fallback);
+
+                                  } catch (ActivityNotFoundException ignored) {
+                                  }
+                              }
+
+                              return true;
+                          }
+
+                          /*
+                           * Facebook
+                           *
+                           * fb://profile/...
+                           *
+                           * เปิด Facebook ถ้ามี
+                           */
+                          if (
+                              scheme.equalsIgnoreCase("fb") ||
+                              scheme.equalsIgnoreCase("facebook")
+                          ) {
+
+                              try {
+
+                                  Intent intent =
+                                          new Intent(
+                                                  Intent.ACTION_VIEW,
+                                                  uri
+                                          );
+
+                                  startActivity(intent);
+
+                              } catch (ActivityNotFoundException e) {
+
+                                  try {
+
+                                      Intent fallback =
+                                              new Intent(
+                                                      Intent.ACTION_VIEW,
+                                                      Uri.parse(
+                                                              "https://www.facebook.com/"
+                                                      )
+                                              );
+
+                                      startActivity(fallback);
+
+                                  } catch (ActivityNotFoundException ignored) {
+                                  }
+                              }
+
+                              return true;
+                          }
+
+                          /*
+                           * Email
+                           *
+                           * mailto:
+                           */
+                          if (scheme.equalsIgnoreCase("mailto")) {
+
+                              try {
+
+                                  Intent intent =
+                                          new Intent(
+                                                  Intent.ACTION_SENDTO,
+                                                  uri
+                                          );
+
+                                  startActivity(intent);
+
+                              } catch (ActivityNotFoundException ignored) {
+                              }
+
+                              return true;
+                          }
+
+                          /*
+                           * Scheme อื่น ๆ
+                           *
+                           * เช่น WhatsApp, Maps หรือแอปอื่น
+                           * ให้ Android หาแอปที่รองรับเอง
+                           */
+                          try {
+
+                              Intent intent =
+                                      new Intent(
+                                              Intent.ACTION_VIEW,
+                                              uri
+                                      );
+
+                              startActivity(intent);
+
+                              return true;
+
+                          } catch (ActivityNotFoundException ignored) {
+
+                              return true;
+                          }
+                      }
+                  });
+
+                  /*
+                   * เว็บหลัก
+                   */
                   webView.loadUrl(
-                      "https://xiaomistoreonlinev2.vercel.app/admin.html"
+                          "https://xiaomistoreonlinev2.vercel.app/admin.html"
                   );
               }
 
               @Override
               public void onBackPressed() {
+
                   if (webView.canGoBack()) {
+
                       webView.goBack();
+
                   } else {
+
                       super.onBackPressed();
                   }
               }
           }
           EOF
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: "8.7"
+          cp icon.png app/src/main/res/drawable/app_icon.png
 
       - name: Build APK
         run: gradle assembleDebug --no-daemon
 
+      - name: Rename APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk XiaomiStoreStockMTN2.apk
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: XiaomiStoreStockMTN2-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
+          name: XiaomiStoreStockMTN2
+          path: XiaomiStoreStockMTN2.apk
