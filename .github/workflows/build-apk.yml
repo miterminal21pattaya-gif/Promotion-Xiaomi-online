@@ -14,7 +14,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Java 17
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -25,7 +25,7 @@ jobs:
         with:
           gradle-version: "8.7"
 
-      - name: Create Android project
+      - name: Create Android Project
         shell: bash
         run: |
           set -e
@@ -77,8 +77,8 @@ jobs:
                   applicationId "com.mtn2.stock"
                   minSdk 23
                   targetSdk 35
-                  versionCode 2
-                  versionName "2.0"
+                  versionCode 3
+                  versionName "3.0"
               }
           }
           EOF
@@ -91,7 +91,7 @@ jobs:
                   <item name="android:windowLightStatusBar">true</item>
                   <item name="android:statusBarColor">#FFFFFF</item>
                   <item name="android:navigationBarColor">#FFFFFF</item>
-                  <item name="android:windowActionModeOverlay">true</item>
+                  <item name="android:windowBackground">#FFFFFF</item>
               </style>
           </resources>
           EOF
@@ -104,17 +104,59 @@ jobs:
               android:viewportWidth="108"
               android:viewportHeight="108">
 
+              <!-- Xiaomi orange background -->
               <path
                   android:fillColor="#FF6900"
-                  android:pathData="M20,0 L88,0 Q108,0 108,20 L108,88 Q108,108 88,108 L20,108 Q0,108 0,88 L0,20 Q0,0 20,0 Z" />
+                  android:pathData="M22,0
+                  L86,0
+                  Q108,0 108,22
+                  L108,86
+                  Q108,108 86,108
+                  L22,108
+                  Q0,108 0,86
+                  L0,22
+                  Q0,0 22,0 Z" />
+
+              <!-- MI logo -->
+              <path
+                  android:fillColor="#FFFFFF"
+                  android:pathData="
+                  M27,28
+                  L44,28
+                  Q54,28 54,38
+                  L54,80
+                  L44,80
+                  L44,43
+                  Q44,38 39,38
+                  L37,38
+                  L37,80
+                  L27,80
+                  Z" />
 
               <path
                   android:fillColor="#FFFFFF"
-                  android:pathData="M25,38 L83,38 L83,48 L25,48 Z" />
+                  android:pathData="
+                  M58,28
+                  L81,28
+                  Q88,28 88,35
+                  L88,80
+                  L78,80
+                  L78,42
+                  Q78,38 74,38
+                  L68,38
+                  L68,80
+                  L58,80
+                  Z" />
 
               <path
                   android:fillColor="#FFFFFF"
-                  android:pathData="M25,58 L83,58 L83,68 L25,68 Z" />
+                  android:pathData="
+                  M27,28
+                  L37,28
+                  L37,38
+                  L27,38
+                  Z" />
+
           </vector>
           EOF
 
@@ -152,7 +194,6 @@ jobs:
           package com.mtn2.stock;
 
           import android.app.Activity;
-          import android.os.Build;
           import android.os.Bundle;
           import android.graphics.Color;
           import android.webkit.WebSettings;
@@ -178,16 +219,13 @@ jobs:
                   settings.setDatabaseEnabled(true);
                   settings.setAllowFileAccess(true);
                   settings.setAllowContentAccess(true);
+
                   settings.setSupportZoom(false);
                   settings.setBuiltInZoomControls(false);
                   settings.setDisplayZoomControls(false);
+
                   settings.setLoadWithOverviewMode(false);
                   settings.setUseWideViewPort(false);
-
-                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                      settings.setForceDark(WebSettings.FORCE_DARK_OFF);
-                      settings.setAlgorithmicDarkeningAllowed(false);
-                  }
 
                   webView.setWebViewClient(new WebViewClient());
 
@@ -208,10 +246,9 @@ jobs:
           EOF
 
       - name: Build APK
-        run: |
-          gradle assembleDebug
+        run: gradle assembleDebug
 
-      - name: Verify APK
+      - name: Check APK
         shell: bash
         run: |
           set -e
@@ -221,6 +258,6 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: XiaomiStoreStockMTN2-v2
+          name: XiaomiStoreStockMTN2-v3
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
