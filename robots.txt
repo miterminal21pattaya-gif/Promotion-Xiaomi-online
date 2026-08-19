@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://xiaomistoreonlinev2.vercel.app/sitemap.xml
