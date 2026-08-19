@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Xiaomi Store — จัดการราคาสินค้า</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--mi:#ff6900;--ink:#171717;--muted:#777;--line:#e8e8e8;--bg:#f5f5f5;--card:#fff;--green:#16803c}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,"Noto Sans Thai",sans-serif;background:var(--bg);color:var(--ink)}
+.top{background:#fff;border-bottom:1px solid #eee;position:sticky;top:0;z-index:20}.topin{max-width:1200px;margin:auto;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px}.brand{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:900}.mi{width:42px;height:42px;border-radius:8px;background:var(--mi);color:#fff;display:grid;place-items:center;font-weight:900;font-size:20px}.sub{font-size:13px;color:#777;font-weight:600}.wrap{max-width:1200px;margin:0 auto;padding:22px 18px 50px}.hero{background:#fff;border-radius:20px;padding:22px;box-shadow:0 3px 18px #0000000a;margin-bottom:16px}.hero h1{margin:0 0 7px;font-size:28px}.hero p{margin:0;color:var(--muted)}
+.login{max-width:440px;margin:70px auto;background:#fff;border-radius:22px;padding:28px;box-shadow:0 8px 35px #0002}.login h2{margin:0 0 8px}.field{display:flex;flex-direction:column;gap:7px;margin-top:15px}.field label{font-weight:800;font-size:14px}.field input,.field select{width:100%;padding:13px 14px;border:1px solid #ddd;border-radius:11px;font:inherit;background:#fff}.btn{border:0;border-radius:11px;padding:12px 16px;font:inherit;font-weight:800;cursor:pointer}.primary{background:var(--mi);color:#fff}.secondary{background:#f0f0f0;color:#222}.green{background:var(--green);color:#fff}.btn:disabled{opacity:.55;cursor:not-allowed}
+.toolbar{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}.filters{display:flex;gap:9px;align-items:center;flex-wrap:wrap;flex:1}.filters select,.filters input{height:44px;border:1px solid #ddd;border-radius:10px;padding:0 12px;font:inherit;background:#fff}.filters input{min-width:240px;flex:1}.count{color:#777;font-size:13px;white-space:nowrap}.actions{display:flex;gap:8px;flex-wrap:wrap}
+.notice{background:#fff8e8;border:1px solid #f2dfae;border-radius:12px;padding:12px 14px;color:#6d5621;font-size:13px;line-height:1.6;margin-bottom:14px}.tablewrap{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:auto;box-shadow:0 3px 18px #00000008}.table{width:100%;min-width:920px;border-collapse:separate;border-spacing:0}.table th{position:sticky;top:0;z-index:3;background:#fafafa;text-align:left;color:#666;font-size:13px;padding:13px 12px;border-bottom:1px solid var(--line)}.table td{padding:11px 12px;border-bottom:1px solid #eee;vertical-align:middle}.table tr:last-child td{border-bottom:0}.name{font-weight:900;max-width:290px}.cat{font-size:12px;color:#888;margin-top:3px}.priceinput{width:145px;padding:11px 10px;border:1px solid #ddd;border-radius:10px;font:inherit}.dateinput{width:155px}.priceinput:focus,.dateinput:focus{outline:none;border-color:var(--mi);box-shadow:0 0 0 3px #ff69001a}.dirty{background:#fff8e8}.badge{display:inline-block;font-size:11px;padding:4px 7px;border-radius:99px;background:#f1f1f1;color:#666;margin-left:5px}.noPromo{color:#888;font-size:12px}.row-saved{animation:saved .8s ease}@keyframes saved{0%{background:#eaf8ee}100%{background:transparent}}
+.footerbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;color:#777;font-size:13px}.hidden{display:none!important}.error{color:#c62828;font-size:13px;margin-top:10px}.successMsg{color:#16803c;font-size:13px;margin-top:10px}
+@media(max-width:700px){.topin{align-items:flex-start}.brand{font-size:18px}.mi{width:38px;height:38px}.hero h1{font-size:23px}.wrap{padding:14px 10px 35px}.hero{padding:18px}.toolbar{padding:11px}.filters{width:100%}.filters select,.filters input{width:100%;min-width:0;flex-basis:100%}.actions{width:100%}.actions .btn{flex:1}.tablewrap{border-radius:13px}.footerbar{flex-direction:column;align-items:flex-start}}
+</style>
+</head>
+<body>
+<header class="top"><div class="topin"><div class="brand"><span class="mi">MI</span><div>Xiaomi Store<br><span class="sub">Terminal 21 Pattaya · Price Manager</span></div></div><button id="logoutBtn" class="btn secondary hidden" onclick="logout()">ออกจากระบบ</button></div></header>
+<main class="wrap">
+<section id="login" class="login">
+  <h2>🔐 จัดการราคาสินค้า</h2><p style="color:#777;margin:0">หน้านี้แยกจาก UI จัดการสินค้าเดิมโดยสมบูรณ์ แต่บันทึกเข้าฐานข้อมูลร้านเดียวกัน</p>
+  <div class="field"><label>รหัสผ่าน Admin</label><input id="pass" type="password" autocomplete="current-password" placeholder="กรอกรหัสผ่าน" onkeydown="if(event.key==='Enter')login()"></div>
+  <button class="btn primary" style="width:100%;margin-top:16px" onclick="login()">เข้าสู่ระบบ</button><div id="loginMsg"></div>
+</section>
+<section id="manager" class="hidden">
+  <div class="hero"><h1>💰 แก้ไขราคาสินค้าทั้งหมด</h1><p>แก้ราคาปกติ · ราคาโปรโมชั่น · วันหมดโปรโมชั่น ได้จากหน้านี้โดยไม่ต้องเปิด UI จัดการสินค้าเดิม</p></div>
+  <div class="notice">💡 <b>สินค้าไม่มีโปรโมชั่น:</b> ใส่เฉพาะ <b>ราคาปกติ</b> แล้วเว้นช่องราคาโปรโมชั่นและวันหมดโปรโมชั่นไว้ได้ ระบบจะขายที่ราคาปกติทันที</div>
+  <div class="toolbar">
+    <div class="filters"><select id="catFilter" onchange="render()"><option value="all">ทุกประเภทสินค้า</option><option value="phone">สมาร์ทโฟน</option><option value="watch">สมาร์ทวอทช์</option><option value="audio">หูฟัง/เสียง</option><option value="home">Smart Home</option></select><input id="search" placeholder="🔎 ค้นหาชื่อสินค้า" oninput="render()"><span id="count" class="count"></span></div>
+    <div class="actions"><button class="btn secondary" onclick="reload()">↻ รีเฟรช</button><button id="saveBtn" class="btn green" onclick="saveAll()">💾 บันทึกทั้งหมด</button></div>
+  </div>
+  <div class="tablewrap"><table class="table"><thead><tr><th>สินค้า</th><th>ราคาปกติ</th><th>ราคาโปรโมชั่น</th><th>วันหมดโปรโมชั่น</th></tr></thead><tbody id="tbody"></tbody></table></div>
+  <div class="footerbar"><span id="status">พร้อมแก้ไข</span><span>ระบบจะคงข้อมูล RAM / ROM / สี / รูป / สเปกเดิมไว้</span></div>
+</section>
+</main>
+<script>
+const SUPABASE_URL='https://hjhfemdpijjilbeigard.supabase.co';
+const SUPABASE_KEY='sb_publishable_WmR7u1Gxq4cYqfYQxkzY7g';
+const ADMIN_PASSWORD='mimtn2';
+const ADMIN_FUNCTION_URL=SUPABASE_URL+'/functions/v1/admin-store';
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let products=[];let drafts=[];let dirty=false;
+const $=id=>document.getElementById(id);
+function money(v){return Number(v||0).toLocaleString('th-TH')+' บาท'}
+function esc(v){return String(v??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]))}
+function catLabel(c){return ({phone:'สมาร์ทโฟน',watch:'สมาร์ทวอทช์',audio:'หูฟัง/เสียง',home:'Smart Home'})[c]||c||'ไม่ระบุ'}
+function validDate(p){if(!p)return '';const d=new Date(p);if(Number.isNaN(d.getTime())||d.getUTCFullYear()<=1971)return '';return d.toISOString().slice(0,10)}
+function normalize(p){
+ const a=p.old_price!=null&&p.old_price!==''?Number(p.old_price):null,b=p.price!=null&&p.price!==''?Number(p.price):null;
+ let normal='',promo='';
+ if(a!=null&&a>0){promo=Math.min(a,b||a);normal=Math.max(a,b||a)}else if(b!=null&&b>0){normal=b}
+ return {id:p.id,name:p.name||'',category:p.category||p.cat||'',normal:normal||'',promo:promo||'',expiry:validDate(p.promo_expires_at),original:p}
+}
+function login(){const p=$('pass').value;if(p!==ADMIN_PASSWORD){$('loginMsg').innerHTML='<div class="error">รหัสผ่านไม่ถูกต้อง</div>';return}sessionStorage.setItem('xiaomi_price_manager','1');$('login').classList.add('hidden');$('manager').classList.remove('hidden');$('logoutBtn').classList.remove('hidden');load()}
+function logout(){sessionStorage.removeItem('xiaomi_price_manager');location.reload()}
+async function load(){setStatus('กำลังโหลดสินค้า...');const r=await db.from('store_products').select('*').eq('active',true).order('sort_order');if(r.error){setStatus('โหลดข้อมูลไม่สำเร็จ: '+r.error.message,true);return}products=r.data||[];drafts=products.map(normalize);dirty=false;render();setStatus('โหลดแล้ว '+products.length+' รายการ')}
+function setStatus(t,bad=false){$('status').textContent=t;$('status').style.color=bad?'#c62828':'#777'}
+function render(){const q=$('search').value.trim().toLowerCase(),cat=$('catFilter').value;const rows=drafts.filter(r=>(cat==='all'||r.category===cat)&&(!q||r.name.toLowerCase().includes(q)));$('count').textContent=`แสดง ${rows.length} / ${drafts.length} รายการ`;$('tbody').innerHTML=rows.length?rows.map(r=>`<tr data-id="${esc(r.id)}"><td><div class="name">${esc(r.name)}</div><div class="cat">${esc(catLabel(r.category))}${r.original?.badge?` <span class="badge">${esc(r.original.badge)}</span>`:''}</div></td><td><input class="priceinput" type="number" min="0" inputmode="numeric" value="${esc(r.normal)}" placeholder="ไม่มีราคา" onchange="change('${esc(r.id)}','normal',this.value)"></td><td><input class="priceinput" type="number" min="0" inputmode="numeric" value="${esc(r.promo)}" placeholder="ไม่มีโปร" onchange="change('${esc(r.id)}','promo',this.value)"></td><td><input class="priceinput dateinput" type="date" value="${esc(r.expiry)}" onchange="change('${esc(r.id)}','expiry',this.value)"></td></tr>`).join(''):`<tr><td colspan="4" style="padding:40px;text-align:center;color:#888">ไม่พบสินค้า</td></tr>`}
+function change(id,key,val){const r=drafts.find(x=>String(x.id)===String(id));if(!r)return;r[key]=val;dirty=true;const tr=document.querySelector(`tr[data-id="${CSS.escape(String(id))}"]`);if(tr)tr.classList.add('dirty');setStatus('มีรายการที่ยังไม่ได้บันทึก')}
+function normalizedSave(r){let promo=r.promo===''||r.promo==null?null:Number(r.promo),normal=r.normal===''||r.normal==null?null:Number(r.normal);if(promo!=null&&(!Number.isFinite(promo)||promo<=0))promo=null;if(normal!=null&&(!Number.isFinite(normal)||normal<=0))normal=null;if(promo!=null&&normal!=null){const lo=Math.min(promo,normal),hi=Math.max(promo,normal);promo=lo;normal=hi}return{promo,normal,expiry:r.expiry||''}}
+function endIso(ymd){if(!ymd)return null;const [y,m,d]=ymd.split('-').map(Number);return new Date(y,m-1,d,23,59,59,999).toISOString()}
+async function adminRequest(action,data={}){const r=await fetch(ADMIN_FUNCTION_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:ADMIN_PASSWORD,action,...data})});let j={};try{j=await r.json()}catch{}if(!r.ok)throw new Error(j.error||'บันทึกข้อมูลไม่สำเร็จ');return j}
+async function saveAll(){if(!drafts.length)return;const bad=drafts.find(r=>{const n=normalizedSave(r);return n.normal===null&&n.promo===null});if(bad){alert(`สินค้า "${bad.name}" ยังไม่มีราคา กรุณาใส่ราคาปกติหรือราคาโปรโมชั่น`);return}if(!confirm(`บันทึกราคา ${drafts.length} รายการพร้อมกันหรือไม่?`))return;const btn=$('saveBtn');btn.disabled=true;setStatus('กำลังบันทึก...');let done=0;try{for(const r of drafts){const n=normalizedSave(r),p={...r.original};if(n.promo!==null){p.price=n.promo;p.old_price=n.normal;p.promo_expires_at=n.expiry?endIso(n.expiry):null}else{p.price=n.normal||0;p.old_price=null;p.promo_expires_at=null}await adminRequest('save_product',{product:p});done++}await load();setStatus(`บันทึกเรียบร้อย ${done} รายการ`)}catch(e){setStatus('บันทึกไม่สำเร็จ: '+e.message,true);alert(e.message)}finally{btn.disabled=false}}
+async function reload(){if(dirty&&!confirm('มีข้อมูลที่ยังไม่ได้บันทึก ต้องการรีเฟรชและทิ้งการแก้ไขหรือไม่?'))return;await load()}
+if(sessionStorage.getItem('xiaomi_price_manager')==='1'){login()}else{$('pass').focus()}
+</script>
+</body></html>
