@@ -1,7 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /admin.html
-Disallow: /admin-app.html
-Disallow: /price-manager.html
-
-Sitemap: https://xiaomistoreonlinev2.vercel.app/sitemap.xml
